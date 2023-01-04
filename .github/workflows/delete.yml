@@ -1,0 +1,57 @@
+name: Xoá old workflow runs
+on:
+  workflow_dispatch:
+    inputs:
+      days:
+        description: 'Số ngày.'
+        required: true
+        default: 30
+      minimum_runs:
+        description: 'Số lần chạy tối thiểu cho mỗi quy trình làm việc.'
+        required: true
+        default: 6
+      delete_workflow_pattern:
+        description: 'Tên hoặc tên tệp của workflow. nếu không được đặt thì sẽ xoá tất cả workflow.'
+        required: false
+      delete_workflow_by_state_pattern:
+        description: 'Xóa quy trình công việc theo trạng thái: active, deleted, disabled_fork, disabled_inactivity, disabled_manually'
+        required: true
+        default: "All"
+        type: choice
+        options:
+          - "All"
+          - active
+          - deleted
+          - disabled_inactivity
+          - disabled_manually
+      delete_run_by_conclusion_pattern:
+        description: 'Xóa quy trình làm việc bằng kết luận: action_required, cancelled, failure, skipped, success'
+        required: true
+        default: "All"
+        type: choice
+        options:
+          - "All"
+          - action_required
+          - cancelled
+          - failure
+          - skipped
+          - success
+      dry_run:
+        description: 'Chỉ ghi log thao tác, không thực hiện bất kỳ thao tác xóa nào.'
+        required: false
+
+jobs:
+  del_runs:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Delete workflow runs
+        uses: Mattraks/delete-workflow-runs@v2
+        with:
+          token: ${{ github.token }}
+          repository: ${{ github.repository }}
+          retain_days: ${{ github.event.inputs.days }}
+          keep_minimum_runs: ${{ github.event.inputs.minimum_runs }}
+          delete_workflow_pattern: ${{ github.event.inputs.delete_workflow_pattern }}
+          delete_workflow_by_state_pattern: ${{ github.event.inputs.delete_workflow_by_state_pattern }}
+          delete_run_by_conclusion_pattern: ${{ github.event.inputs.delete_run_by_conclusion_pattern }}
+          dry_run: ${{ github.event.inputs.dry_run }}
