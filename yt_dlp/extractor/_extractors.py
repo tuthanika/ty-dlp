@@ -284,6 +284,10 @@ from .camdemy import (
     CamdemyIE,
     CamdemyFolderIE
 )
+from .camfm import (
+    CamFMEpisodeIE,
+    CamFMShowIE
+)
 from .cammodels import CamModelsIE
 from .camsoda import CamsodaIE
 from .camtasia import CamtasiaEmbedIE
@@ -1158,6 +1162,7 @@ from .myvi import (
 )
 from .myvideoge import MyVideoGeIE
 from .myvidster import MyVidsterIE
+from .mzaalo import MzaaloIE
 from .n1 import (
     N1InfoAssetIE,
     N1InfoIIE,
@@ -2094,7 +2099,6 @@ from .tvp import (
 )
 from .tvplay import (
     TVPlayIE,
-    ViafreeIE,
     TVPlayHomeIE,
 )
 from .tvplayer import TVPlayerIE
