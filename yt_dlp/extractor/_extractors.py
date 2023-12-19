@@ -276,6 +276,7 @@ from .brilliantpala import (
 )
 from .businessinsider import BusinessInsiderIE
 from .bundesliga import BundesligaIE
+from .bundestag import BundestagIE
 from .buzzfeed import BuzzFeedIE
 from .byutv import BYUtvIE
 from .c56 import C56IE
@@ -991,6 +992,7 @@ from .lynda import (
     LyndaIE,
     LyndaCourseIE
 )
+from .maariv import MaarivIE
 from .magellantv import MagellanTVIE
 from .magentamusik360 import MagentaMusik360IE
 from .mailru import (
