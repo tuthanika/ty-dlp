@@ -2646,16 +2646,17 @@ class YoutubeIE(YoutubeBaseInfoExtractor):
                 'timestamp': 1657627949,
                 'release_date': '20220712',
                 'channel_url': 'https://www.youtube.com/channel/UCSJ4gkVC6NrvII8umztf0Ow',
-                'description': 'md5:13a6f76df898f5674f9127139f3df6f7',
+                'description': 'md5:452d5c82f72bb7e62a4e0297c3f01c23',
                 'age_limit': 0,
                 'thumbnail': 'https://i.ytimg.com/vi/jfKfPfyJRdk/maxresdefault.jpg',
                 'release_timestamp': 1657641570,
                 'uploader_url': 'https://www.youtube.com/@LofiGirl',
                 'channel_follower_count': int,
                 'channel_is_verified': True,
-                'title': r're:^lofi hip hop radio 📚 - beats to relax/study to',
+                'title': r're:^lofi hip hop radio 📚 beats to relax/study to',
                 'view_count': int,
                 'live_status': 'is_live',
+                'media_type': 'livestream',
                 'tags': 'count:32',
                 'channel': 'Lofi Girl',
                 'availability': 'public',
@@ -2816,6 +2817,7 @@ class YoutubeIE(YoutubeBaseInfoExtractor):
             'skip': 'Age-restricted; requires authentication',
         },
         {
+            'note': 'Support /live/ URL + media type for post-live content',
             'url': 'https://www.youtube.com/live/qVv6vCqciTM',
             'info_dict': {
                 'id': 'qVv6vCqciTM',
@@ -2838,6 +2840,7 @@ class YoutubeIE(YoutubeBaseInfoExtractor):
                 'channel_id': 'UCIdEIHpS0TdkqRkHL5OkLtA',
                 'categories': ['Entertainment'],
                 'live_status': 'was_live',
+                'media_type': 'livestream',
                 'release_timestamp': 1671793345,
                 'channel': 'さなちゃんねる',
                 'description': 'md5:6aebf95cc4a1d731aebc01ad6cc9806d',
@@ -4030,6 +4033,9 @@ class YoutubeIE(YoutubeBaseInfoExtractor):
             raise ExtractorError('No player clients have been requested', expected=True)
 
         if self.is_authenticated:
+            if (smuggled_data.get('is_music_url') or self.is_music_url(url)) and 'web_music' not in requested_clients:
+                requested_clients.append('web_music')
+
             unsupported_clients = [
                 client for client in requested_clients if not INNERTUBE_CLIENTS[client]['SUPPORTS_COOKIES']
             ]
@@ -4168,6 +4174,16 @@ class YoutubeIE(YoutubeBaseInfoExtractor):
                     deprioritized_prs.append(pr)
                 else:
                     prs.append(pr)
+
+            # EU countries require age-verification for accounts to access age-restricted videos
+            # If account is not age-verified, _is_agegated() will be truthy for non-embedded clients
+            if self.is_authenticated and self._is_agegated(pr):
+                self.to_screen(
+                    f'{video_id}: This video is age-restricted and YouTube is requiring '
+                    'account age-verification; some formats may be missing', only_once=True)
+                # tv_embedded can work around the age-verification requirement for embeddable videos
+                # web_creator may work around age-verification for all videos but requires PO token
+                append_client('tv_embedded', 'web_creator')
 
         prs.extend(deprioritized_prs)
 
@@ -4793,6 +4809,7 @@ class YoutubeIE(YoutubeBaseInfoExtractor):
             'tags': keywords,
             'playable_in_embed': get_first(playability_statuses, 'playableInEmbed'),
             'live_status': live_status,
+            'media_type': 'livestream' if get_first(video_details, 'isLiveContent') else None,
             'release_timestamp': live_start_time,
             '_format_sort_fields': (  # source_preference is lower for potentially damaged formats
                 'quality', 'res', 'fps', 'hdr:12', 'source', 'vcodec', 'channels', 'acodec', 'lang', 'proto'),
@@ -5357,10 +5374,12 @@ class YoutubeTabBaseInfoExtractor(YoutubeBaseInfoExtractor):
             yield self.url_result(
                 f'https://www.youtube.com/shorts/{video_id}',
                 ie=YoutubeIE, video_id=video_id,
-                **traverse_obj(renderer, ('overlayMetadata', {
-                    'title': ('primaryText', 'content', {str}),
-                    'view_count': ('secondaryText', 'content', {parse_count}),
-                })),
+                **traverse_obj(renderer, {
+                    'title': ((
+                        ('overlayMetadata', 'primaryText', 'content', {str}),
+                        ('accessibilityText', {lambda x: re.fullmatch(r'(.+), (?:[\d,.]+(?:[KM]| million)?|No) views? - play Short', x)}, 1)), any),
+                    'view_count': ('overlayMetadata', 'secondaryText', 'content', {parse_count}),
+                }),
                 thumbnails=self._extract_thumbnails(renderer, 'thumbnail', final_key='sources'))
             return
 
