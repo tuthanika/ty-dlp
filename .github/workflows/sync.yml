@@ -42,7 +42,7 @@ jobs:
       #  run: git branch -f master
       - name: Push changes
         run: git push https://${{ github.token }}@github.com/tuthanika/ty-dlp.git
-      - uses: gautamkrishnar/keepalive-workflow@v1 # using the workflow with default settings
+      #- uses: gautamkrishnar/keepalive-workflow@v1 # using the workflow with default settings
       - name: Delete workflow runs
         uses: Mattraks/delete-workflow-runs@v2
         with:
